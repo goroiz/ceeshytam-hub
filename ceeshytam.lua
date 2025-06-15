@@ -1,13 +1,14 @@
 --[[
-  Ceeshytam Hub
+  Ceeshytam Hub - Improved Version
   Created by goroiz
-  Version: 1.0
+  Version: 2.0
   No Key System
 --]]
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
+local UserInputService = game:GetService("UserInputService")
 
 -- Tema warna coklat
 local ColorScheme = {
@@ -18,17 +19,24 @@ local ColorScheme = {
     Accent = Color3.fromRGB(210, 105, 30)  -- Chocolate
 }
 
+-- Variabel global untuk GUI
+local ScreenGui = nil
+local MainFrame = nil
+local Minimized = false
+
 -- Fungsi untuk membuat GUI
 local function CreateCeeshytamGUI()
+    if ScreenGui then ScreenGui:Destroy() end
+    
     -- Main ScreenGui
-    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "CeeshytamHub"
     ScreenGui.ResetOnSpawn = false
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     ScreenGui.Parent = game.CoreGui
 
     -- Main Frame
-    local MainFrame = Instance.new("Frame")
+    MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
     MainFrame.Size = UDim2.new(0, 400, 0, 400)
     MainFrame.Position = UDim2.new(0.5, -200, 0.5, -200)
@@ -65,6 +73,28 @@ local function CreateCeeshytamGUI()
     Title.BackgroundTransparency = 1
     Title.Parent = Header
 
+    -- Tombol Minimize
+    local MinimizeButton = Instance.new("TextButton")
+    MinimizeButton.Name = "MinimizeButton"
+    MinimizeButton.Text = "_"
+    MinimizeButton.TextColor3 = ColorScheme.Text
+    MinimizeButton.TextSize = 18
+    MinimizeButton.Font = Enum.Font.GothamBold
+    MinimizeButton.Size = UDim2.new(0, 40, 0, 40)
+    MinimizeButton.Position = UDim2.new(1, -80, 0, 0)
+    MinimizeButton.BackgroundTransparency = 1
+    MinimizeButton.Parent = Header
+
+    MinimizeButton.MouseButton1Click:Connect(function()
+        if Minimized then
+            MainFrame.Size = UDim2.new(0, 400, 0, 400)
+            Minimized = false
+        else
+            MainFrame.Size = UDim2.new(0, 400, 0, 40)
+            Minimized = true
+        end
+    end)
+
     local CloseButton = Instance.new("TextButton")
     CloseButton.Name = "CloseButton"
     CloseButton.Text = "X"
@@ -78,6 +108,7 @@ local function CreateCeeshytamGUI()
 
     CloseButton.MouseButton1Click:Connect(function()
         ScreenGui:Destroy()
+        ScreenGui = nil
     end)
 
     -- Tab Container
@@ -138,26 +169,15 @@ local function CreateCeeshytamGUI()
     local SpeedSlider = CreateSlider("Walk Speed", 16, 100, 16, PlayerTab, 10, 10)
     local JumpSlider = CreateSlider("Jump Power", 50, 200, 50, PlayerTab, 10, 70)
     
-    local NoclipToggle = CreateToggle("Noclip", false, PlayerTab, 10, 130)
-    local FlyToggle = CreateToggle("Fly", false, PlayerTab, 10, 180)
+    local FlyToggle = CreateToggle("Fly", false, PlayerTab, 10, 130)
+    local NoclipToggle = CreateToggle("Noclip", false, PlayerTab, 10, 180)
     
-    local ResetButton = Instance.new("TextButton")
-    ResetButton.Name = "ResetButton"
-    ResetButton.Text = "Reset Character"
-    ResetButton.TextColor3 = ColorScheme.Text
-    ResetButton.TextSize = 14
-    ResetButton.Font = Enum.Font.Gotham
-    ResetButton.Size = UDim2.new(0.9, 0, 0, 40)
-    ResetButton.Position = UDim2.new(0.05, 0, 0, 250)
-    ResetButton.BackgroundColor3 = ColorScheme.Accent
-    ResetButton.Parent = PlayerTab
-    
-    local Corner2 = Instance.new("UICorner")
-    Corner2.CornerRadius = UDim.new(0, 6)
-    Corner2.Parent = ResetButton
+    local ResetButton = CreateButton("Reset Character", PlayerTab, 10, 250)
     
     ResetButton.MouseButton1Click:Connect(function()
-        LocalPlayer.Character:BreakJoints()
+        if LocalPlayer.Character then
+            LocalPlayer.Character:BreakJoints()
+        end
     end)
 
     -- Teleport Tab
@@ -169,11 +189,11 @@ local function CreateCeeshytamGUI()
     TeleportTab.Visible = false
     TeleportTab.Parent = TabContainer
 
-    -- Teleport Tab Content
-    local TeleportButtons = {
+    -- Teleport Locations
+    local TeleportLocations = {
         {Name = "Spawn", Position = Vector3.new(0, 5, 0)},
         {Name = "Sky", Position = Vector3.new(0, 500, 0)},
-        {Name = "Behind", Position = function() 
+        {Name = "Behind", Position = function()
             local char = LocalPlayer.Character
             if char then
                 local hrp = char:FindFirstChild("HumanoidRootPart")
@@ -182,52 +202,81 @@ local function CreateCeeshytamGUI()
                 end
             end
             return CFrame.new(0, 5, 0)
-        end},
-        {Name = "TP to Player", Position = function() 
-            local target = Players:FindFirstChild("PlayerName")
-            if target and target.Character then
-                local hrp = target.Character:FindFirstChild("HumanoidRootPart")
-                if hrp then
-                    return hrp.CFrame
-                end
-            end
-            return nil
         end}
     }
 
-    for i, button in ipairs(TeleportButtons) do
-        local btn = Instance.new("TextButton")
-        btn.Name = button.Name
-        btn.Text = button.Name
-        btn.TextColor3 = ColorScheme.Text
-        btn.TextSize = 14
-        btn.Font = Enum.Font.Gotham
-        btn.Size = UDim2.new(0.9, 0, 0, 40)
-        btn.Position = UDim2.new(0.05, 0, 0, 10 + (i-1)*50)
-        btn.BackgroundColor3 = ColorScheme.Secondary
-        btn.Parent = TeleportTab
-        
-        local CornerBtn = Instance.new("UICorner")
-        CornerBtn.CornerRadius = UDim.new(0, 6)
-        CornerBtn.Parent = btn
-        
-        btn.MouseButton1Click:Connect(function()
-            local char = LocalPlayer.Character
-            if char then
-                local hrp = char:FindFirstChild("HumanoidRootPart")
-                if hrp then
-                    if type(button.Position) == "function" then
-                        local pos = button.Position()
-                        if pos then
-                            hrp.CFrame = pos
-                        end
-                    else
-                        hrp.CFrame = CFrame.new(button.Position)
-                    end
+    -- Teleport to Player
+    local PlayerList = Instance.new("Frame")
+    PlayerList.Name = "PlayerList"
+    PlayerList.Size = UDim2.new(0.9, 0, 0, 30)
+    PlayerList.Position = UDim2.new(0.05, 0, 0, 160)
+    PlayerList.BackgroundColor3 = ColorScheme.Secondary
+    PlayerList.Parent = TeleportTab
+    
+    local CornerPlayer = Instance.new("UICorner")
+    CornerPlayer.CornerRadius = UDim.new(0, 6)
+    CornerPlayer.Parent = PlayerList
+    
+    local PlayerDropdown = Instance.new("TextButton")
+    PlayerDropdown.Name = "PlayerDropdown"
+    PlayerDropdown.Text = "Select Player"
+    PlayerDropdown.TextColor3 = ColorScheme.Text
+    PlayerDropdown.TextSize = 14
+    PlayerDropdown.Font = Enum.Font.Gotham
+    PlayerDropdown.Size = UDim2.new(1, 0, 1, 0)
+    PlayerDropdown.BackgroundTransparency = 1
+    PlayerDropdown.Parent = PlayerList
+    
+    local PlayerScroll = Instance.new("ScrollingFrame")
+    PlayerScroll.Name = "PlayerScroll"
+    PlayerScroll.Size = UDim2.new(1, 0, 0, 150)
+    PlayerScroll.Position = UDim2.new(0, 0, 1, 0)
+    PlayerScroll.BackgroundColor3 = ColorScheme.Background
+    PlayerScroll.Visible = false
+    PlayerScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+    PlayerScroll.Parent = PlayerList
+    
+    PlayerDropdown.MouseButton1Click:Connect(function()
+        PlayerScroll.Visible = not PlayerScroll.Visible
+        if PlayerScroll.Visible then
+            PlayerScroll.CanvasSize = UDim2.new(0, 0, 0, #Players:GetPlayers() * 30)
+            PlayerScroll:ClearAllChildren()
+            
+            for i, player in ipairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer then
+                    local PlayerBtn = Instance.new("TextButton")
+                    PlayerBtn.Name = player.Name
+                    PlayerBtn.Text = player.Name
+                    PlayerBtn.TextColor3 = ColorScheme.Text
+                    PlayerBtn.TextSize = 14
+                    PlayerBtn.Font = Enum.Font.Gotham
+                    PlayerBtn.Size = UDim2.new(1, 0, 0, 30)
+                    PlayerBtn.Position = UDim2.new(0, 0, 0, (i-1)*30)
+                    PlayerBtn.BackgroundColor3 = ColorScheme.Secondary
+                    PlayerBtn.Parent = PlayerScroll
+                    
+                    PlayerBtn.MouseButton1Click:Connect(function()
+                        PlayerDropdown.Text = player.Name
+                        PlayerScroll.Visible = false
+                    end)
                 end
             end
-        end)
-    end
+        end
+    end)
+    
+    local TeleportPlayerBtn = CreateButton("TP to Player", TeleportTab, 10, 200)
+    TeleportPlayerBtn.MouseButton1Click:Connect(function()
+        local targetName = PlayerDropdown.Text
+        if targetName ~= "Select Player" then
+            local target = Players:FindFirstChild(targetName)
+            if target and target.Character then
+                local hrp = target.Character:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    LocalPlayer.Character:MoveTo(hrp.Position)
+                end
+            end
+        end
+    end)
 
     -- Visuals Tab
     local VisualsTab = Instance.new("Frame")
@@ -239,9 +288,9 @@ local function CreateCeeshytamGUI()
     VisualsTab.Parent = TabContainer
 
     -- Visuals Tab Content
-    local EspToggle = CreateToggle("Player ESP", false, VisualsTab, 10, 10)
-    local TracersToggle = CreateToggle("Tracers", false, VisualsTab, 10, 60)
-    local FullbrightToggle = CreateToggle("Fullbright", false, VisualsTab, 10, 110)
+    CreateToggle("Player ESP", false, VisualsTab, 10, 10)
+    CreateToggle("Tracers", false, VisualsTab, 10, 60)
+    CreateToggle("Fullbright", false, VisualsTab, 10, 110)
 
     -- Misc Tab
     local MiscTab = Instance.new("Frame")
@@ -253,9 +302,27 @@ local function CreateCeeshytamGUI()
     MiscTab.Parent = TabContainer
 
     -- Misc Tab Content
-    local FpsBoost = CreateButton("FPS Boost", MiscTab, 10, 10)
-    local ServerHop = CreateButton("Server Hop", MiscTab, 10, 70)
-    local CopyDiscord = CreateButton("Copy Discord", MiscTab, 10, 130)
+    CreateButton("FPS Boost", MiscTab, 10, 10).MouseButton1Click:Connect(function()
+        settings().Rendering.QualityLevel = 1
+        for _, v in ipairs(game:GetDescendants()) do
+            if v:IsA("Part") or v:IsA("MeshPart") or v:IsA("Union") then
+                v.Material = Enum.Material.Plastic
+                v.Reflectance = 0
+            elseif v:IsA("Decal") then
+                v.Transparency = 1
+            elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
+                v.Enabled = false
+            end
+        end
+    end)
+    
+    CreateButton("Server Hop", MiscTab, 10, 70).MouseButton1Click:Connect(function()
+        game:GetService("TeleportService"):Teleport(game.PlaceId)
+    end)
+    
+    CreateButton("Copy Discord", MiscTab, 10, 130).MouseButton1Click:Connect(function()
+        setclipboard("https://discord.gg/ceeshytam")
+    end)
 
     -- Make draggable
     MakeDraggable(Header, MainFrame)
@@ -353,7 +420,7 @@ function CreateSlider(name, min, max, default, parent, x, y)
         dragging = true
     end)
     
-    game:GetService("UserInputService").InputEnded:Connect(function(input)
+    UserInputService.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = false
         end
@@ -361,7 +428,7 @@ function CreateSlider(name, min, max, default, parent, x, y)
     
     game:GetService("RunService").Heartbeat:Connect(function()
         if dragging then
-            local mousePos = game:GetService("UserInputService"):GetMouseLocation()
+            local mousePos = UserInputService:GetMouseLocation()
             local relativeX = mousePos.X - Track.AbsolutePosition.X
             local ratio = math.clamp(relativeX / Track.AbsoluteSize.X, 0, 1)
             local value = min + (max - min) * ratio
@@ -428,8 +495,6 @@ function CreateToggle(name, default, parent, x, y)
             Noclip(state)
         elseif name == "Fly" then
             Fly(state)
-        elseif name == "Player ESP" then
-            ToggleESP(state)
         end
     end)
     
@@ -452,34 +517,10 @@ function CreateButton(name, parent, x, y)
     Corner.CornerRadius = UDim.new(0, 6)
     Corner.Parent = Button
     
-    -- Button functionality
-    if name == "FPS Boost" then
-        Button.MouseButton1Click:Connect(function()
-            settings().Rendering.QualityLevel = 1
-            for _, v in ipairs(game:GetDescendants()) do
-                if v:IsA("Part") or v:IsA("MeshPart") or v:IsA("Union") then
-                    v.Material = Enum.Material.Plastic
-                    v.Reflectance = 0
-                elseif v:IsA("Decal") then
-                    v.Transparency = 1
-                elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
-                    v.Enabled = false
-                end
-            end
-        end)
-    elseif name == "Server Hop" then
-        Button.MouseButton1Click:Connect(function()
-            game:GetService("TeleportService"):Teleport(game.PlaceId)
-        end)
-    elseif name == "Copy Discord" then
-        Button.MouseButton1Click:Connect(function()
-            setclipboard("discord.gg/example")
-        end)
-    end
-    
     return Button
 end
 
+-- Fungsi draggable yang diperbaiki
 function MakeDraggable(dragPart, mainPart)
     local dragging = false
     local dragInput, mousePos, framePos
@@ -504,7 +545,7 @@ function MakeDraggable(dragPart, mainPart)
         end
     end)
 
-    game:GetService("UserInputService").InputChanged:Connect(function(input)
+    UserInputService.InputChanged:Connect(function(input)
         if input == dragInput and dragging then
             local delta = input.Position - mousePos
             mainPart.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X, framePos.Y.Scale, framePos.Y.Offset + delta.Y)
@@ -531,9 +572,17 @@ function Fly(state)
     -- Fly implementation would go here
 end
 
-function ToggleESP(state)
-    -- ESP implementation would go here
-end
+-- Toggle GUI dengan F5
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if input.KeyCode == Enum.KeyCode.F5 and not gameProcessed then
+        if ScreenGui then
+            ScreenGui:Destroy()
+            ScreenGui = nil
+        else
+            CreateCeeshytamGUI()
+        end
+    end
+end)
 
 -- Initialize GUI
 CreateCeeshytamGUI()
